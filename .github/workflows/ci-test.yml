@@ -1,0 +1,32 @@
+on:
+  push:
+    branches: [main]
+
+jobs: 
+  install-armor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup a Kubernetes environment
+        run: ./.github/workflows/install-k3s.sh
+      - name: Test connectivity
+        run: kubectl get no
+      - name: install karmor
+        run: curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin && karmor install
+      - name: install Discovery-engine
+        run: kubectl apply -f https://raw.githubusercontent.com/kubearmor/discovery-engine/dev/deployments/k8s/deployment.yaml
+      - name: run app1
+        run: kubectl apply -f ./pod.yaml
+      - name: create baseline
+        run: |
+        karmor summary -p nginx > /tmp/baseline
+        cat /tmp/baseline
+      - name: run app2
+        run: kubectl apply -f ./pod1.yaml
+      - name: create updated
+        run: |
+        karmor summary -p nginx1 > /tmp/updated
+        cat /tmp/updated
+      - name: diff file
+        run: |
+        diff /tmp/baseline /tmp/updated
+
