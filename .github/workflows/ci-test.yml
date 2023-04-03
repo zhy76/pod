@@ -6,6 +6,12 @@ jobs:
   install-armor:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Download required dependencies
+        run: |
+          sudo apt-get install -y socat
       - name: Setup a Kubernetes environment
         run: ./.github/workflows/install-k3s.sh
       - name: Test connectivity
@@ -18,15 +24,19 @@ jobs:
         run: kubectl apply -f ./pod.yaml
       - name: create baseline
         run: |
-        karmor summary -p nginx > /tmp/baseline
-        cat /tmp/baseline
+          sleep 150
+          kubectl get po -A
+          karmor summary -p nginx > /tmp/baseline
+          cat /tmp/baseline
       - name: run app2
         run: kubectl apply -f ./pod1.yaml
       - name: create updated
         run: |
-        karmor summary -p nginx1 > /tmp/updated
-        cat /tmp/updated
+          sleep 150
+          kubectl get po -A
+          karmor summary -p nginx1 > /tmp/updated
+          cat /tmp/updated
       - name: diff file
         run: |
-        diff /tmp/baseline /tmp/updated
+          diff /tmp/baseline /tmp/updated || true
 
